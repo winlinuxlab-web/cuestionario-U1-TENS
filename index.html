@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cuestionario: Seguridad de datos clínicos</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #dbe3ee;
+      --accent: #1d4ed8;
+      --ok: #166534;
+      --ok-bg: #dcfce7;
+      --bad: #991b1b;
+      --bad-bg: #fee2e2;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .header {
+      background: linear-gradient(135deg, #0f172a, #1d4ed8);
+      color: white;
+      padding: 28px;
+      border-radius: 18px;
+      margin-bottom: 22px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.08);
+    }
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+    }
+    .header p {
+      margin: 0;
+      opacity: .95;
+    }
+    .case {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.05);
+    }
+    .case h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 1.35rem;
+    }
+    .case-description {
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+    .question {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      background: #fbfdff;
+    }
+    .question h3 {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+    .option {
+      display: block;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      background: white;
+      cursor: pointer;
+      transition: .2s ease;
+    }
+    .option:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .option input {
+      margin-right: 10px;
+    }
+    .feedback {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      display: none;
+      font-size: .95rem;
+    }
+    .feedback.correct {
+      background: var(--ok-bg);
+      color: var(--ok);
+      display: block;
+    }
+    .feedback.incorrect {
+      background: var(--bad-bg);
+      color: var(--bad);
+      display: block;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    button {
+      border: none;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .primary {
+      background: var(--accent);
+      color: white;
+    }
+    .secondary {
+      background: #e5e7eb;
+      color: var(--text);
+    }
+    .result {
+      margin-top: 22px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      display: none;
+    }
+    .result h2 {
+      margin-top: 0;
+    }
+    .score {
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 10px 0;
+    }
+    .footer-note {
+      color: var(--muted);
+      font-size: .92rem;
+      margin-top: 10px;
+    }
+    @media (max-width: 700px) {
+      .container { padding: 14px; }
+      .header h1 { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="header">
+      <h1>Cuestionario: Seguridad de datos clínicos</h1>
+      <p>Lee cada caso y selecciona la alternativa correcta. Son 12 preguntas, organizadas en 4 casos de 3 preguntas cada uno.</p>
+    </section>
+
+    <form id="quizForm"></form>
+
+    <div class="controls">
+      <button type="button" class="primary" onclick="calcularResultado()">Revisar respuestas</button>
+      <button type="button" class="secondary" onclick="reiniciarCuestionario()">Reiniciar</button>
+    </div>
+
+    <section class="result" id="resultBox">
+      <h2>Resultado final</h2>
+      <div class="score" id="scoreText"></div>
+      <p id="summaryText"></p>
+      
+    </section>
+  </div>
+
+  
+  <script>
+    const quizData = [
+      {
+        titulo: "Caso 1: Situación A - Luz Verde",
+        descripcion: "El personal TENS registra y consulta información clínica usando el sistema institucional desde la red interna del establecimiento, mediante una conexión cableada y controlada.",
+        preguntas: [
+          {
+            texto: "1. ¿Qué tipo de red se asocia directamente con la Situación A por ser privada, institucional y de acceso controlado?",
+            opciones: {
+              A: "Internet pública",
+              B: "Intranet institucional",
+              C: "Red social personal",
+              D: "Wi-Fi de libre acceso"
+            },
+            correcta: "B",
+            explicacion: "La intranet institucional es una red privada, diseñada para uso interno y acceso restringido al personal autorizado."
+          },
+          {
+            texto: "2. En la Situación A, ¿qué medio de conexión disminuye de mejor manera el riesgo de interceptación de la información?",
+            opciones: {
+              A: "Señal de Bluetooth activa",
+              B: "Datos móviles del técnico",
+              C: "Cable de red del hospital",
+              D: "Wi-Fi abierto de la cafetería"
+            },
+            correcta: "C",
+            explicacion: "La conexión cableada del hospital ofrece un entorno más controlado y seguro que una red inalámbrica abierta o de uso personal."
+          },
+          {
+            texto: "3. Comparando los distintos escenarios, ¿cuál entrega el nivel más alto de protección para datos clínicos sensibles?",
+            opciones: {
+              A: "Situación C, por la rapidez del envío desde aplicaciones personales",
+              B: "Situación B, porque toda conexión por Wi-Fi es completamente segura",
+              C: "Situación A, porque usa sistema institucional y red controlada",
+              D: "Todos los escenarios ofrecen el mismo nivel de seguridad"
+            },
+            correcta: "C",
+            explicacion: "La Situación A es la más segura porque combina sistema institucional, acceso autorizado y una red interna controlada."
+          }
+        ]
+      },
+      {
+        titulo: "Caso 2: Situación B - Luz Amarilla",
+        descripcion: "El personal envía información mediante herramientas institucionales, pero los datos deben salir hacia un destinatario externo. Existe protección, aunque el trayecto ya no depende solo de la red interna.",
+        preguntas: [
+          {
+            texto: "4. ¿Cuál es la característica principal de la Situación B respecto al recorrido de los datos?",
+            opciones: {
+              A: "La información nunca sale del computador local",
+              B: "Los datos viajan por Internet, pero con protección de seguridad",
+              C: "Se utiliza una red externa sin ninguna regulación",
+              D: "La información se elimina automáticamente después del envío"
+            },
+            correcta: "B",
+            explicacion: "En la Situación B los datos sí salen al exterior, pero lo hacen a través de mecanismos institucionales con protección, como el cifrado."
+          },
+          {
+            texto: "5. En la analogía del 'sobre sellado', ¿qué elemento protege la información clínica durante el envío en la Situación B?",
+            opciones: {
+              A: "La rapidez de la conexión Wi-Fi",
+              B: "El cifrado del correo institucional",
+              C: "El uso de una contraseña simple",
+              D: "La marca del computador utilizado"
+            },
+            correcta: "B",
+            explicacion: "El cifrado del correo institucional funciona como un 'sobre sellado', ya que protege el contenido mientras viaja por la red."
+          },
+          {
+            texto: "6. ¿Por qué la Situación B se clasifica como 'Luz Amarilla' y no como 'Luz Verde'?",
+            opciones: {
+              A: "Porque requiere que los datos salgan por Internet hacia un destino externo",
+              B: "Porque el correo electrónico está prohibido en el área de salud",
+              C: "Porque el paciente aún no firma el consentimiento informado",
+              D: "Porque siempre se usa un teléfono personal para enviar archivos"
+            },
+            correcta: "A",
+            explicacion: "Se clasifica como amarilla porque, aunque existen resguardos, los datos salen del entorno interno institucional."
+          }
+        ]
+      },
+      {
+        titulo: "Caso 3: Situación C - Luz Roja",
+        descripcion: "Un funcionario toma fotografías de la ficha clínica y la envía por una aplicación personal usando una red pública o no controlada. Esto expone datos sensibles a riesgos graves.",
+        preguntas: [
+          {
+            texto: "7. ¿Qué representa la Situación C en el contexto de la gestión de datos clínicos?",
+            opciones: {
+              A: "Un procedimiento estándar y autorizado",
+              B: "Una mejora de eficiencia en la comunicación clínica",
+              C: "Un incumplimiento grave de la normativa de privacidad",
+              D: "El uso correcto de herramientas móviles personales"
+            },
+            correcta: "C",
+            explicacion: "La Situación C implica un tratamiento indebido de datos sensibles y constituye una vulneración grave de la privacidad."
+          },
+          {
+            texto: "8. ¿Cuál es el mayor riesgo técnico al enviar la ficha clínica por WhatsApp utilizando Wi-Fi público?",
+            opciones: {
+              A: "Que el mensaje demore más tiempo en llegar",
+              B: "Que los datos circulen por Internet pública sin control institucional",
+              C: "Que la aplicación se cierre de forma inesperada",
+              D: "Que el archivo ocupe demasiado espacio en el teléfono"
+            },
+            correcta: "B",
+            explicacion: "El mayor problema es que la información sale del entorno institucional y circula por una red no controlada por la organización."
+          },
+          {
+            texto: "9. ¿Qué acción del personal TENS transforma un procedimiento en una Situación C o 'Luz Roja'?",
+            opciones: {
+              A: "Registrar datos en el sistema institucional SIDRA",
+              B: "Enviar un archivo adjunto desde el correo institucional",
+              C: "Tomar fotografías de la ficha y usar redes externas no seguras",
+              D: "Verificar el tamaño de un archivo mediante comandos del sistema"
+            },
+            correcta: "C",
+            explicacion: "Tomar fotos de fichas clínicas y enviarlas por medios personales o redes no seguras rompe el resguardo institucional de los datos."
+          }
+        ]
+      },
+      {
+        titulo: "Caso 4: Conceptos y normativa",
+        descripcion: "Este caso reúne conceptos clave para interpretar correctamente los escenarios anteriores y reconocer señales de seguridad y cumplimiento normativo.",
+        preguntas: [
+          {
+            texto: "10. ¿Qué norma chilena se vulnera de manera explícita al compartir datos clínicos personales de la forma descrita en la Situación C?",
+            opciones: {
+              A: "Ley de Derechos y Deberes de los Pacientes",
+              B: "Ley N° 19.628 sobre Protección de la Vida Privada",
+              C: "Ley de Presupuesto del Sector Público",
+              D: "Ley General de Telecomunicaciones"
+            },
+            correcta: "B",
+            explicacion: "La Ley N° 19.628 regula la protección de datos personales y su vulneración aplica cuando se expone información privada sin resguardo adecuado."
+          },
+          {
+            texto: "11. En la analogía del semáforo, ¿cómo se define correctamente una intranet?",
+            opciones: {
+              A: "Una carretera pública abierta a cualquier usuario",
+              B: "Un espacio privado de datos accesible solo a personal autorizado",
+              C: "El sitio web público donde los pacientes revisan resultados",
+              D: "Una red que funciona solo cuando no hay conexión eléctrica"
+            },
+            correcta: "B",
+            explicacion: "La intranet es una red privada de uso interno, pensada para acceso restringido dentro de la institución."
+          },
+          {
+            texto: "12. ¿Qué señal visual en el navegador ayuda a reconocer que la conexión a un sistema web usa un canal protegido?",
+            opciones: {
+              A: "El brillo de la pantalla",
+              B: "El candado y el protocolo HTTPS en la barra de direcciones",
+              C: "La cantidad de pestañas abiertas",
+              D: "El color de fondo del sistema"
+            },
+            correcta: "B",
+            explicacion: "El candado y HTTPS indican que la comunicación entre el navegador y el sitio está protegida mediante cifrado."
+          }
+        ]
+      }
+    ];
+
+    const form = document.getElementById('quizForm');
+
+    function mezclarArreglo(arreglo) {
+      const copia = [...arreglo];
+      for (let i = copia.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copia[i], copia[j]] = [copia[j], copia[i]];
+      }
+      return copia;
+    }
+
+    function renderQuiz() {
+      form.innerHTML = '';
+      let globalIndex = 0;
+
+      quizData.forEach((caso) => {
+        const caseSection = document.createElement('section');
+        caseSection.className = 'case';
+
+        caseSection.innerHTML = `
+          <h2>${caso.titulo}</h2>
+          <p class="case-description">${caso.descripcion}</p>
+        `;
+
+        caso.preguntas.forEach((pregunta) => {
+          globalIndex++;
+          const questionName = `q${globalIndex}`;
+          const questionDiv = document.createElement('div');
+          questionDiv.className = 'question';
+
+          const opcionesMezcladas = mezclarArreglo(
+            Object.entries(pregunta.opciones).map(([idOriginal, texto]) => ({ idOriginal, texto }))
+          );
+
+          let opcionesHTML = '';
+          opcionesMezcladas.forEach((opcion, index) => {
+            const letraVisual = String.fromCharCode(65 + index);
+            opcionesHTML += `
+              <label class="option">
+                <input type="radio" name="${questionName}" value="${opcion.idOriginal}">
+                <strong>${letraVisual})</strong> ${opcion.texto}
+              </label>
+            `;
+          });
+
+          questionDiv.innerHTML = `
+            <h3>${pregunta.texto}</h3>
+            <div class="options">${opcionesHTML}</div>
+            <div class="feedback" id="feedback-${questionName}"></div>
+          `;
+
+          caseSection.appendChild(questionDiv);
+        });
+
+        form.appendChild(caseSection);
+      });
+    }
+
+    function calcularResultado() {
+      let score = 0;
+      let total = 0;
+      let globalIndex = 0;
+
+      quizData.forEach(caso => {
+        caso.preguntas.forEach(pregunta => {
+          globalIndex++;
+          total++;
+          const questionName = `q${globalIndex}`;
+          const selected = document.querySelector(`input[name="${questionName}"]:checked`);
+          const feedback = document.getElementById(`feedback-${questionName}`);
+
+          if (!selected) {
+            feedback.className = 'feedback incorrect';
+            feedback.textContent = `No seleccionaste respuesta. ${pregunta.explicacion}`;
+            return;
+          }
+
+          if (selected.value === pregunta.correcta) {
+            score++;
+            feedback.className = 'feedback correct';
+            feedback.textContent = `Correcta. ${pregunta.explicacion}`;
+          } else {
+            feedback.className = 'feedback incorrect';
+            feedback.textContent = `Incorrecta. ${pregunta.explicacion}`;
+          }
+        });
+      });
+
+      const resultBox = document.getElementById('resultBox');
+      const scoreText = document.getElementById('scoreText');
+      const summaryText = document.getElementById('summaryText');
+      const porcentaje = Math.round((score / total) * 100);
+
+      scoreText.textContent = `${score} / ${total} (${porcentaje}%)`;
+
+      let mensaje = '';
+      if (porcentaje >= 90) {
+        mensaje = 'Excelente dominio del tema. Reconoces con claridad los niveles de seguridad y el resguardo de datos clínicos.';
+      } else if (porcentaje >= 70) {
+        mensaje = 'Buen resultado. Comprendes la mayor parte de los conceptos, aunque todavía conviene reforzar algunos criterios de seguridad.';
+      } else if (porcentaje >= 60) {
+        mensaje = 'Resultado aceptable. Alcanzas lo mínimo esperado, pero necesitas reforzar redes seguras, cifrado y normativa.';
+      } else {
+        mensaje = 'Debes reforzar el contenido. Revisa especialmente las diferencias entre intranet, uso de Internet, cifrado y exposición de datos sensibles.';
+      }
+
+      summaryText.textContent = mensaje;
+      resultBox.style.display = 'block';
+      resultBox.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function reiniciarCuestionario() {
+      renderQuiz();
+      document.getElementById('resultBox').style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    renderQuiz();
+  </script>
+
+</body>
+</html>
